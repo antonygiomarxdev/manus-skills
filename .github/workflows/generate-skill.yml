@@ -1,0 +1,52 @@
+name: Auto-generate SKILL.md
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'docs/**/*.md'
+      - 'package.json'
+      - 'scripts/generate-skill.js'
+  workflow_dispatch: # allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    # Skip if the last commit was already by this workflow (avoid infinite loop)
+    if: "!contains(github.event.head_commit.message, '[skip ci]') && github.actor != 'github-actions[bot]'"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate SKILL.md
+        run: node scripts/generate-skill.js
+
+      - name: Check if SKILL.md changed
+        id: diff
+        run: |
+          if git diff --quiet SKILL.md; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push updated SKILL.md
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config --local user.name  "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add SKILL.md
+          git commit -m "chore: auto-regenerate SKILL.md from docs [skip ci]"
+          git push
