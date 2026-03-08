@@ -1,91 +1,66 @@
 /**
- * Core types for the Manus Skills system
- * Defines the interfaces and enums used across all skill implementations
+ * Core types and interfaces for the Manus Skills system.
  */
 
-/**
- * Categories of skills available in the Manus AI system
- */
 export enum SkillCategory {
-  FILE_OPERATIONS = 'file_operations',
-  CODE_UNDERSTANDING = 'code_understanding',
-  SEARCH_NAVIGATION = 'search_navigation',
-  TERMINAL_OPERATIONS = 'terminal_operations',
-  TESTING_DEBUGGING = 'testing_debugging',
-  CODE_REFACTORING = 'code_refactoring',
-  VERSION_CONTROL = 'version_control',
-  PROJECT_MANAGEMENT = 'project_management',
-  MEMORY_CONTEXT = 'memory_context',
-  AI_SPECIFIC = 'ai_specific',
+  FILE_OPERATIONS = 'file-operations',
+  CODE_UNDERSTANDING = 'code-understanding',
+  SEARCH_NAVIGATION = 'search-navigation',
+  TERMINAL_OPERATIONS = 'terminal-operations',
+  TESTING_DEBUGGING = 'testing-debugging',
+  CODE_REFACTORING = 'code-refactoring',
+  VERSION_CONTROL = 'version-control',
+  PROJECT_MANAGEMENT = 'project-management',
+  MEMORY_CONTEXT = 'memory-context',
+  AI_SPECIFIC = 'ai-specific',
 }
 
-/**
- * Possible statuses for a skill execution result
- */
-export enum SkillStatus {
-  SUCCESS = 'success',
-  ERROR = 'error',
-  PARTIAL = 'partial',
-  PENDING = 'pending',
-}
-
-/**
- * A parameter definition for a skill
- */
 export interface Parameter {
   name: string;
-  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
-  description: string;
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object';
   required: boolean;
-  default?: unknown;
+  description: string;
+  default?: any;
 }
 
-/**
- * An example of how to use a skill
- */
 export interface Example {
   description: string;
-  input: Record<string, unknown>;
-  expectedOutput: string;
+  params: Record<string, any>;
+  expectedOutput?: any;
 }
 
-/**
- * The result of executing a skill
- */
-export interface SkillResult<T = unknown> {
-  status: SkillStatus;
-  data?: T;
+export interface SkillResult {
+  success: boolean;
+  data?: any;
   error?: string;
-  metadata?: {
-    executionTime?: number;
-    timestamp?: string;
-    [key: string]: unknown;
-  };
+  metadata?: Record<string, any>;
 }
 
-/**
- * Core interface that all skills must implement
- */
+export interface SkillMetadata {
+  version: string;
+  tags: string[];
+  dependencies: string[];
+  author?: string;
+  deprecated?: boolean;
+}
+
 export interface Skill {
   name: string;
   category: SkillCategory;
   description: string;
   parameters: Parameter[];
-  execute: (params: Record<string, unknown>) => Promise<SkillResult>;
+  execute: (params: any) => Promise<SkillResult>;
   examples: Example[];
-  metadata: {
-    version: string;
-    tags: string[];
-    dependencies: string[];
-  };
+  metadata: SkillMetadata;
 }
 
-/**
- * Registry to manage and access all available skills
- */
 export interface SkillRegistry {
-  register: (skill: Skill) => void;
-  get: (name: string) => Skill | undefined;
-  list: () => Skill[];
-  listByCategory: (category: SkillCategory) => Skill[];
+  register(skill: Skill): void;
+  unregister(name: string): void;
+  get(name: string): Skill | undefined;
+  getAll(): Skill[];
+  getByCategory(category: SkillCategory): Skill[];
+  search(query: string): Skill[];
 }
+
+export type SkillExecutor = (skill: Skill, params: any) => Promise<SkillResult>;
